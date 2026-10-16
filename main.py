@@ -12,27 +12,39 @@ connection = mysql.connector.connect(
     database=os.getenv("DB_NAME")
 )
 
-def create_account(name, initial_balance):
+def create_account(customer_id, initial_balance):
     if initial_balance < 0:
         print('Initial balance cannot be less than $0.00')
         return
     
     cursor = connection.cursor()    
     
-    sql = "INSERT INTO accounts (name, balance) VALUES (%s, %s)"
-    values = (name, initial_balance)
+    sql = """
+        INSERT INTO accounts (customer_id, balance)
+        VALUES (%s, %s)
+    """
+    values = (customer_id, initial_balance)
 
     cursor.execute(sql, values)
     connection.commit()
 
+    account_id = cursor.lastrowid
+
     cursor.close()
 
-    print('Account created successfully.')
+    print(f'Account {account_id} created successfully.')
 
 def get_account(account_id):
     cursor = connection.cursor()
     
-    sql = "SELECT * FROM accounts WHERE account_id = %s"
+    sql = """
+        SELECT accounts.account_id, customers.name, customers.phone, accounts.balance
+        FROM accounts 
+        JOIN customers
+            ON accounts.customer_id = customers.customer_id 
+        WHERE accounts.account_id = %s
+    """
+
     value = (account_id,)
 
     cursor.execute(sql, value)
@@ -45,10 +57,12 @@ def get_account(account_id):
     
     account_no = account[0]
     cust_name = account[1]
-    balance = account[2]
+    cust_phone = account[2]
+    balance = account[3]
 
     print(f'\nAccount Number: {account_no}'
           f'\nName: {cust_name}'
+          f'\nPhone: {cust_phone}'
           f'\nBalance: ${balance}'
     )
 
@@ -87,7 +101,7 @@ def withdraw(account_id, amount):
 
     cursor = connection.cursor()
     
-    sql = "SELECT * FROM accounts WHERE account_id = %s"
+    sql = "SELECT balance FROM accounts WHERE account_id = %s"
     value = (account_id,)
 
     cursor.execute(sql, value)
@@ -98,7 +112,7 @@ def withdraw(account_id, amount):
         cursor.close()
         return
 
-    if account[2] >= amount:
+    if account[0] >= amount:
         sql = """
             UPDATE accounts
             SET balance = balance - %s
@@ -109,7 +123,7 @@ def withdraw(account_id, amount):
         cursor.execute(sql, values)
         connection.commit()
 
-        print('\nWithdrawal succesful.')
+        print('\nWithdrawal successful.')
     else:
         print('\nInsufficient balance.')
 
@@ -181,11 +195,21 @@ while True:
     # CREATE ACCOUNT
     if choice == "1":
         name = input("Name: ")
+        phone = input("Phone: ")
+
         initial_balance = get_valid_amount(
             'Inital balance: ',
             allow_zero=True
         )
-        create_account(name, initial_balance)
+
+        customer = get_customer_by_phone(phone)
+
+        if customer is None:
+            customer_id = create_customer(name, phone)
+        else: 
+            customer_id = customer[0]
+
+        create_account(customer_id, initial_balance)
 
     # VIEW ACCOUNT/GET BALANCE
     elif choice == "2":
