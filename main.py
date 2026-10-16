@@ -135,6 +135,34 @@ def get_valid_amount(prompt, allow_zero=False):
         except ValueError:
             print('Amount must be a valid dollar amount.')            
 
+def get_customer_by_phone(phone):
+    cursor = connection.cursor()
+
+    sql = "SELECT * FROM customers WHERE phone = %s"
+    value = (phone,)
+
+    cursor.execute(sql, value)
+    customer = cursor.fetchone()
+
+    cursor.close()
+
+    return customer
+
+def create_customer(name, phone):
+    cursor = connection.cursor()
+
+    sql = "INSERT INTO customers (name, phone) VALUES (%s, %s)"
+    values = (name, phone)
+
+    cursor.execute(sql, values)
+    connection.commit()
+
+    customer_id = cursor.lastrowid
+
+    cursor.close()
+
+    return customer_id
+
 # create_account("Test Customer", 500.00)
 # get_account(1)
 # deposit(1, 100)
