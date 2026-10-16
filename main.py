@@ -115,6 +115,26 @@ def withdraw(account_id, amount):
 
     cursor.close()
 
+def validate_id():
+    while True:
+        account_id = input('Account ID Number: ')
+        if account_id.isdigit():
+            return int(account_id)
+        print('Invalid Account ID Number.')
+
+def get_valid_amount(prompt, allow_zero=False):
+    while True:
+        amount = input(prompt)
+
+        try:
+            amount = float(amount)
+            if amount < 0 or (amount == 0 and not allow_zero):
+                print('Amount must be positive.')
+                continue
+            return amount
+        except ValueError:
+            print('Amount must be a valid dollar amount.')            
+
 # create_account("Test Customer", 500.00)
 # get_account(1)
 # deposit(1, 100)
@@ -133,84 +153,27 @@ while True:
     # CREATE ACCOUNT
     if choice == "1":
         name = input("Name: ")
-        
-        while True:
-            initial_balance = input("Initial balance: ")
-            
-            try:
-                initial_balance = float(initial_balance)
-
-                if initial_balance < 0:
-                    print('Initial balance cannot be less than $0.00')
-                    continue
-
-                break
-
-            except ValueError:
-                print('Initial balance must be valid dollar amount, or $0')
-            
-
+        initial_balance = get_valid_amount(
+            'Inital balance: ',
+            allow_zero=True
+        )
         create_account(name, initial_balance)
 
     # VIEW ACCOUNT/GET BALANCE
     elif choice == "2":
-        
-        while True:
-            account_id = input("Account ID Number: ")
-        
-            if account_id.isdigit():
-                account_id = int(account_id)
-                break
-
-            print('Invalid Acount ID Number.')
-        
+        account_id = validate_id()
         get_account(account_id)
 
     # DEPOSIT
     elif choice == "3":
-        while True:
-            account_id = input("Account ID Number: ")
-
-            if account_id.isdigit():
-                account_id = int(account_id)
-                break
-
-            print('Invalid Account ID Number.')
-
-        while True:
-            amount = input("Amount to deposit: ")
-            
-            try:
-                amount = float(amount)
-                break
-            except ValueError:
-                print('Amount must be a valid dollar amount.')
-                
-
+        account_id = validate_id()
+        amount = get_valid_amount('Amount to deposit: ')                
         deposit(account_id, amount)
 
     # WITHDRAWAL    
     elif choice == "4":
-        
-        while True:
-            account_id = input("Account ID Number: ")
-            
-            if account_id.isdigit():
-                account_id = int(account_id)
-                break
-            
-            print('Invalid Account ID Number.')
-
-        while True:
-
-            amount = input("Amount to withdraw: ") 
-    
-            try: 
-                amount = float(amount)
-                break
-            except ValueError:
-                print('Amount must be valid dollar amount.')
-
+        account_id = validate_id()
+        amount = get_valid_amount('Amount to withdraw: ')
         withdraw(account_id, amount)
 
     # EXIT
