@@ -14,7 +14,7 @@ connection = mysql.connector.connect(
 
 def create_account(customer_id, initial_balance):
     if initial_balance < 0:
-        print('Initial balance cannot be less than $0.00')
+        print('\nInitial balance cannot be less than $0.00')
         return
     
     cursor = connection.cursor()    
@@ -32,7 +32,7 @@ def create_account(customer_id, initial_balance):
 
     cursor.close()
 
-    print(f'Account {account_id} created successfully.')
+    print(f'\nAccount {account_id} created successfully.')
 
 def get_account(account_id):
     cursor = connection.cursor()
@@ -51,7 +51,7 @@ def get_account(account_id):
     account = cursor.fetchone()
 
     if account is None:
-        print('Account not found.')
+        print('\nAccount not found.')
         cursor.close()
         return
     
@@ -70,7 +70,7 @@ def get_account(account_id):
 
 def deposit(account_id, amount):
     if amount <= 0:
-        print('Deposit amount must be positive.')
+        print('\nDeposit amount must be positive.')
         return
     
     cursor = connection.cursor()
@@ -85,18 +85,18 @@ def deposit(account_id, amount):
     cursor.execute(sql, values)
     
     if cursor.rowcount == 0:
-        print('Account not found.')
+        print('\nAccount not found.')
         cursor.close()
         return
     
     connection.commit()
     cursor.close()
 
-    print('Deposit successful.')
+    print('\nDeposit successful.')
 
 def withdraw(account_id, amount):
     if amount <= 0:
-        print('Withdrawal amount must be positive.')
+        print('\nWithdrawal amount must be positive.')
         return
 
     cursor = connection.cursor()
@@ -108,7 +108,7 @@ def withdraw(account_id, amount):
     account = cursor.fetchone()
 
     if account is None:
-        print('Account not found.')
+        print('\nAccount not found.')
         cursor.close()
         return
 
@@ -134,7 +134,7 @@ def validate_id():
         account_id = input('Account ID Number: ')
         if account_id.isdigit():
             return int(account_id)
-        print('Invalid Account ID Number.')
+        print('\nInvalid Account ID Number.')
 
 def get_valid_amount(prompt, allow_zero=False):
     while True:
@@ -143,11 +143,11 @@ def get_valid_amount(prompt, allow_zero=False):
         try:
             amount = float(amount)
             if amount < 0 or (amount == 0 and not allow_zero):
-                print('Amount must be positive.')
+                print('\nAmount must be positive.')
                 continue
             return amount
         except ValueError:
-            print('Amount must be a valid dollar amount.')            
+            print('\nAmount must be a valid dollar amount.')            
 
 def get_customer_by_phone(phone):
     cursor = connection.cursor()
@@ -198,7 +198,7 @@ while True:
         phone = input("Phone: ")
 
         initial_balance = get_valid_amount(
-            'Inital balance: ',
+            'Initial balance: ',
             allow_zero=True
         )
 
@@ -206,12 +206,28 @@ while True:
 
         if customer is None:
             customer_id = create_customer(name, phone)
+            create_account(customer_id, initial_balance)
         else: 
             customer_id = customer[0]
+            cust_name = customer[1]
+            cust_phone = customer[2]
 
-        create_account(customer_id, initial_balance)
+            print(f'Existing account found for {cust_phone}: {cust_name}')
 
-    # VIEW ACCOUNT/GET BALANCE
+            while True:
+                another_account = input(
+                    'Create another account for existing customer? (y/n): '
+                ).lower()
+                
+                if another_account == 'n':
+                    break
+                elif another_account == 'y':
+                    create_account(customer[0], initial_balance)
+                    break
+                else:
+                    print('Invalid. Select "y" or "n": ')
+
+   # VIEW ACCOUNT/GET BALANCE
     elif choice == "2":
         account_id = validate_id()
         get_account(account_id)
@@ -233,6 +249,6 @@ while True:
         break
 
     else:
-        print('Please choose an option from 1-5.')
+        print('\nPlease choose an option from 1-5.')
 
 connection.close()
