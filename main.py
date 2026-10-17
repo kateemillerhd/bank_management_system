@@ -209,29 +209,31 @@ def transfer(sender_acct, receiver_acct, amount):
         return
     
     if sender[1] >= amount:
-        sql = """
+        try:
+            sql = """
             UPDATE accounts 
             SET balance = balance - %s
             WHERE account_id = %s
-        """
-        values = (amount, sender_acct)
-        cursor.execute(sql, values)
-        connection.commit()
+            """
+            values = (amount, sender_acct)
+            cursor.execute(sql, values)
+       
+            sql = """
+                UPDATE accounts
+                SET balance = balance + %s
+                WHERE account_id = %s
+            """
+            values = (amount, receiver_acct)
+            cursor.execute(sql, values)
 
-        sql = """
-            UPDATE accounts
-            SET balance = balance + %s
-            WHERE account_id = %s
-        """
-        values = (amount, receiver_acct)
-        cursor.execute(sql, values)
-        connection.commit()
+            connection.commit()
 
-        cursor.close()
-
-        print('Transfer completed successfully.')
+            print('Transfer completed successfully.')
+        except mysql.connector.Error as error:
+            connection.rollback()
+            print(f'\nTransfer failed: {error}')
     else:
-        print('\nInsufficient funds.')
+        print('\nInsufficient funds.') 
 
     cursor.close()    
     
