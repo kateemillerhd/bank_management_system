@@ -177,6 +177,64 @@ def create_customer(name, phone):
 
     return customer_id
 
+def transfer(sender_acct, receiver_acct, amount):
+    if sender_acct == receiver_acct:
+        print('\nSender and receiver accounts must be different.')
+        return
+    
+    if amount <= 0:
+        print('Transfer amount must be greater than $0.00')
+        return
+
+    cursor = connection.cursor()
+
+    sql = "SELECT account_id, balance FROM accounts WHERE account_id = %s"
+    value = (sender_acct,)
+    cursor.execute(sql, value)
+
+    sender = cursor.fetchone()
+    if sender is None:
+        print('\nSender account not found.')
+        cursor.close()
+        return
+
+    sql = "SELECT account_id FROM accounts WHERE account_id = %s"
+    value = (receiver_acct,)
+    cursor.execute(sql, value)
+
+    receiver = cursor.fetchone()
+    if receiver is None:
+        print('\nReceiver account not found.')
+        cursor.close()
+        return
+    
+    if sender[1] >= amount:
+        sql = """
+            UPDATE accounts 
+            SET balance = balance - %s
+            WHERE account_id = %s
+        """
+        values = (amount, sender_acct)
+        cursor.execute(sql, values)
+        connection.commit()
+
+        sql = """
+            UPDATE accounts
+            SET balance = balance + %s
+            WHERE account_id = %s
+        """
+        values = (amount, receiver_acct)
+        cursor.execute(sql, values)
+        connection.commit()
+
+        cursor.close()
+
+        print('Transfer completed successfully.')
+    else:
+        print('\nInsufficient funds.')
+
+    cursor.close()    
+    
 # create_account("Test Customer", 500.00)
 # get_account(1)
 # deposit(1, 100)
@@ -188,7 +246,8 @@ while True:
     print("2. View Account")
     print("3. Deposit")
     print("4. Withdraw")
-    print("5. Exit")
+    print("5. Transfer")
+    print("6. Exit")
 
     choice = input("\nChoose an option: ")
 
@@ -244,8 +303,15 @@ while True:
         amount = get_valid_amount('Amount to withdraw: ')
         withdraw(account_id, amount)
 
-    # EXIT
+    # TRANSFER
     elif choice == "5":
+        sender_acct = validate_id()
+        receiver_acct = validate_id()
+        amount = get_valid_amount('Amount to transfer: ')
+        transfer(sender_acct, receiver_acct, amount)
+    
+    # EXIT
+    elif choice == "6":
         break
 
     else:
